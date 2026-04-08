@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Disaster</title>
+    <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+    <input type="hidden" id="GridWidth" value="150" />
+    <input type="hidden" id="PageNum" value="0" />
+    <input type="hidden" id="PageSize" value="20" />
+    <div id="divWrap">
+        <div id="divFunction">
+            <div>
+                <input type="text" id="iptKeyword" value="" />
+                <button id="btnQuery">查詢</button>
+            </div>
+            <div>
+                <input type="checkbox" id="chkFuzzy" />
+                <label for="chkFuzzy">模糊查詢</label>
+            </div>
+        </div>
+        <div id="divShow">
+        </div>
+    </div>
+    <script src="./script.js"></script>
+</body>
+</html>
