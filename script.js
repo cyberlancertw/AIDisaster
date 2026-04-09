@@ -1,5 +1,6 @@
 // 判斷是否捲到底的讀取中用變數
 const config = {
+    isPortrait: false,
     isProcessing: false,
     query: '',
     isFuzzy: false,
@@ -11,70 +12,65 @@ const config = {
 };
 window.addEventListener('load', initializeBody);
 
+
 /**
- * 元件到齊後的執行項目
- * */
-function initializeBody() {
-    config.cardWidth = parseInt(window.innerWidth / 4);
-    window.addEventListener('scroll', scrollBody);
-    document.getElementById('btnQuery').addEventListener('click', function () { refreshData(true); });
-    document.getElementById('iptKeyword').addEventListener('keyup', pressKeyword);
-    document.getElementById('chkFuzzy').addEventListener('change', function () { refreshData(true); });
+ * 圖片 DOM 的更新
+ * @param {boolean} isClear true 表全部清除，false 往後補圖 
+ * @param {string[]} ids 過濾且分頁後的 id 資料
+ */
+function appendCard(isClear, ids) {
+    const divShow = document.getElementById('divShow');
+    if (isClear) {
+        divShow.innerHTML = '';
+    }
+    for (const id of ids) {
+        const pic = document.createElement('div');
+        const link = document.createElement('a');
+        const wrap = document.createElement('div');
+        const img = document.createElement('img');
+        const path = `./image/${id}.png`;
+        img.setAttribute('src', path);
+        img.className = 'gallery-image';
+        wrap.appendChild(img);
+        wrap.className = 'gallery-wrap';
+        link.setAttribute('href', path);
+        //link.setAttribute('target', '_blank');
+        link.className = 'gallery-link';
+        link.appendChild(wrap);
+        pic.className = 'gallery-pic';
+        pic.appendChild(link);
+
+        if (!config.isPortrait){
+            img.addEventListener('load', calculateSpan);
+        }
+        divShow.appendChild(pic);
+    }
+}
+
+/**
+ * 圖片載完後，計算圖卡需要的高度
+ */
+function calculateSpan(){
+    const h = this.naturalHeight, w = this.naturalWidth;
+    const s = Math.ceil(((350 - 10 * 2) * h / w + 10 * 2 + 5) / 10);
+    this.parentNode.parentNode.parentNode.style.gridRowEnd = `span ${s}`;
+    this.removeEventListener('load', calculateSpan);
+}
+
+/**
+ * 螢幕旋轉事件
+ */
+function changeScreenOrientation(){
+    config.isPortrait = screen.orientation.type === 'portrait-primary' || screen.orientation.type === 'portrait-secondary';
     refreshData(true);
 }
 
-
 /**
- * 更新圖片
- * @param {boolean} isClear true 表全部清除，false 往後補圖
+ * 螢幕旋轉事件(過時)
  */
-function refreshData(isClear) {
-    switchEnable(false);
-    getData(isClear);
-}
-
-/**
- * 取得圖片資料
- * @param {boolean} isClear true 表全部清除，false 往後補圖
- */
-function getData(isClear) {
-    if (isClear) {
-        config.page.index = 0;
-    }
-
-    fetch('./data.json').then(response => response.json()).then(function (data) {
-        setConfig();
-        const ids = filterData(data);
-        if (ids.length < config.page.size){
-            config.page.index = -1;
-        }
-        else{
-            config.page.index++;
-        }
-        appendCard(isClear, ids);
-        switchEnable(true);
-        config.isProcessing = false;
-    });
-}
-
-/**
- * 過濾處理
- * @param {any[]} datas 
- */
-function filterData(datas){
-    const pageIndex = config.page.index, pageSize = config.page.size, skipCount = pageIndex * pageSize;
-    if (config.query.length > 0){
-        const queryWords = config.query.split(' ');
-        if (config.isFuzzy){
-            return filterOr(datas, queryWords, skipCount, pageSize);
-        }
-        else{
-            return filterAnd(datas, queryWords, skipCount, pageSize);
-        }
-    }
-    else{
-        return filterAll(datas, skipCount, pageSize);
-    }
+function changeWindowOrientation(){
+    config.isPortrait = window.matchMedia('(orientation: portrait)').matches;
+    refreshData(true);
 }
 
 /**
@@ -135,6 +131,26 @@ function filterAnd(datas, queryWords, skipCount, pageSize){
 }
 
 /**
+ * 過濾處理
+ * @param {any[]} datas 
+ */
+function filterData(datas){
+    const pageIndex = config.page.index, pageSize = config.page.size, skipCount = pageIndex * pageSize;
+    if (config.query.length > 0){
+        const queryWords = config.query.split(' ');
+        if (config.isFuzzy){
+            return filterOr(datas, queryWords, skipCount, pageSize);
+        }
+        else{
+            return filterAnd(datas, queryWords, skipCount, pageSize);
+        }
+    }
+    else{
+        return filterAll(datas, skipCount, pageSize);
+    }
+}
+
+/**
  * 模糊查詢與分頁過濾
  * @param {any[]} datas 
  * @param {string[]} queryWords 
@@ -163,39 +179,52 @@ function filterOr(datas, queryWords, skipCount, pageSize){
 }
 
 /**
- * 圖片 DOM 的更新
- * @param {boolean} isClear true 表全部清除，false 往後補圖 
- * @param {string[]} ids 過濾且分頁後的 id 資料
+ * 取得圖片資料
+ * @param {boolean} isClear true 表全部清除，false 往後補圖
  */
-function appendCard(isClear, ids) {
-    const divShow = document.getElementById('divShow');
+function getData(isClear) {
     if (isClear) {
-        divShow.innerHTML = '';
+        config.page.index = 0;
     }
-    const width = `width:${config.cardWidth}px;`;
-    for (const id of ids) {
-        const pic = document.createElement('div');
-        const link = document.createElement('a');
-        const wrap = document.createElement('div');
-        const img = document.createElement('img');
-        const path = `./image/${id}.png`;
-        img.setAttribute('src', path);
-        img.className = 'gallery-image';
-        wrap.appendChild(img);
-        wrap.className = 'gallery-wrap';
-        link.setAttribute('href', path);
-        //link.setAttribute('target', '_blank');
-        link.className = 'gallery-link';
-        link.appendChild(wrap);
-        pic.className = 'gallery-pic';
-        pic.appendChild(link);
 
-        const h = img.naturalHeight, w = img.naturalWidth;
-        const s = ((350 - 10 * 2) * h / w + 10 * 2 + 5) / 10;
-        pic.style.gridRowEnd = `span ${Math.ceil(s)}`;
+    fetch('./data.json').then(response => response.json()).then(function (data) {
+        setConfig();
+        const ids = filterData(data);
+        if (ids.length < config.page.size){
+            config.page.index = -1;
+        }
+        else{
+            config.page.index++;
+        }
+        appendCard(isClear, ids);
+        switchEnable(true);
+        config.isProcessing = false;
+    });
+}
 
-        divShow.appendChild(pic);
+/**
+ * 元件到齊後的執行項目
+ * */
+function initializeBody() {
+    config.cardWidth = parseInt(window.innerWidth / 4);
+    
+    if (screen.orientation){
+        config.isPortrait = screen.orientation.type === 'portrait-primary' || screen.orientation.type === 'portrait-secondary';
+        screen.orientation.addEventListener('change', changeScreenOrientation);
     }
+    else if (window.orientation){
+        config.isPortrait = window.matchMedia('(orientation: portrait)').matches;
+        window.orientation.addEventListener('orientationChange', changeWindowOrientation);
+    }
+    else{
+        config.isPortrait = window.matchMedia('(orientation: portrait)').matches;
+        window.addEventListener('resize', resizeWindow);
+    }
+    window.addEventListener('scroll', scrollBody);
+    document.getElementById('btnQuery').addEventListener('click', function () { refreshData(true); });
+    document.getElementById('iptKeyword').addEventListener('keyup', pressKeyword);
+    document.getElementById('chkFuzzy').addEventListener('change', function () { refreshData(true); });
+    refreshData(true);
 }
 
 /**
@@ -206,9 +235,25 @@ function pressKeyword(e) {
     if (e.key == 'Enter') document.getElementById('btnQuery').click();    
 }
 
-function setConfig(){
-    config.query = document.getElementById('iptKeyword').value.trim();
-    config.isFuzzy = document.getElementById('chkFuzzy').checked;
+/**
+ * 更新圖片
+ * @param {boolean} isClear true 表全部清除，false 往後補圖
+ */
+function refreshData(isClear) {
+    switchEnable(false);
+    getData(isClear);
+}
+
+/**
+ * 視窗縮放的事件
+ */
+function resizeWindow(){
+    const isPortraitNow = window.matchMedia('(orientation: portrait)').matches;
+    if (config.isPortrait === isPortraitNow){
+        return;
+    }
+    config.isPortrait = isPortraitNow;
+    refreshData(true);
 }
 
 /**
@@ -222,6 +267,14 @@ function scrollBody() {
         config.isProcessing = true;
         refreshData(false);
     }
+}
+
+/**
+ * 取關鍵字輸入框與是否模糊查詢
+ */
+function setConfig(){
+    config.query = document.getElementById('iptKeyword').value.trim();
+    config.isFuzzy = document.getElementById('chkFuzzy').checked;
 }
 
 /**
