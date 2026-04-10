@@ -187,7 +187,8 @@ function getData(isClear) {
         config.page.index = 0;
     }
 
-    fetch('./data.json?v=20260409').then(response => response.json()).then(function (data) {
+    const dataVersion = document.getElementById('DataVersion').value;
+    fetch(`./data.json?v=${dataVersion}`).then(response => response.json()).then(function (data) {
         setConfig();
         const ids = filterData(data);
         if (ids.length < config.page.size){
