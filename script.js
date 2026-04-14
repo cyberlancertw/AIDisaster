@@ -81,15 +81,15 @@ function changeWindowOrientation(){
  * @returns {string[]}
  */
 function filterAll(datas, skipCount, pageSize){
-    let total = 0, count = 0;
+    let index = -1, count = 0;
     const result = [];
     for (const data of datas){
-        total++;
-        if (skipCount < total){
+        index++;
+        if (skipCount <= index){
             count++;
             result.push(data.id);
 
-            if (pageSize < count){
+            if (pageSize === count){
                 break;
             }
         }
@@ -106,7 +106,7 @@ function filterAll(datas, skipCount, pageSize){
  * @returns {string[]}
  */
 function filterAnd(datas, queryWords, skipCount, pageSize){
-    let total = 0, count = 0;
+    let index = -1, count = 0;
     const result = [];
     for (const data of datas){
         let isMatch = true;
@@ -117,11 +117,11 @@ function filterAnd(datas, queryWords, skipCount, pageSize){
             }
         }
         if (isMatch){
-            total++;
-            if (skipCount < total){
+            index++;
+            if (skipCount <= index){
                 count++;
                 result.push(data.id);
-                if (pageSize < count){
+                if (pageSize === count){
                     break;
                 }
             }
@@ -159,16 +159,16 @@ function filterData(datas){
  * @returns {string[]}
  */
 function filterOr(datas, queryWords, skipCount, pageSize){
-    let total = 0, count = 0;
+    let index = -1, count = 0;
     const result = [];
     for (const data of datas){
         for (const word of queryWords){
             if (data.keyword.includes(word)){
-                total++;
-                if (skipCount < total){
+                index++;
+                if (skipCount <= index){
                     count++;
                     result.push(data.id);
-                    if (pageSize < count){
+                    if (pageSize === count){
                         break;
                     }
                 }
