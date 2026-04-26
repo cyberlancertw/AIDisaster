@@ -178,6 +178,25 @@ function filterOr(datas, queryWords, skipCount, pageSize){
     return result;
 }
 
+function generateUUID(){
+    const temp = new Array(32), result = new Array(32);
+    temp[12] = 4;
+    temp[16] = (Math.random() * 4 | 0) | 8;
+    for (let i = 0; i < 12; i++){
+        temp[i] = Math.random() * 16 | 0;
+    }
+    for (let i = 12; i < 16; i++){
+        temp[i] = Math.random() * 16 | 0;
+    }
+    for (let i = 16; i < 32; i++){
+        temp[i] = Math.random() * 16 | 0;
+    }
+    for (let i = 0; i < 32; i++){
+        result[i] = temp[i].toString(16).toUpperCase();
+    }
+    return result.join('');
+}
+
 /**
  * 取得圖片資料
  * @param {boolean} isClear true 表全部清除，false 往後補圖
@@ -233,7 +252,12 @@ function initializeBody() {
  * @param {any} e 按鍵事件
  */
 function pressKeyword(e) {
-    if (e.key == 'Enter') document.getElementById('btnQuery').click();    
+    if (e.key == 'Enter'){
+        document.getElementById('btnQuery').click();
+    }
+    else if (e.altKey && e.code === 'KeyU'){
+        alert(generateUUID());
+    }
 }
 
 /**
