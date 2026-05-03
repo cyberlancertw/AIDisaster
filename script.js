@@ -98,6 +98,34 @@ function filterAll(datas, skipCount, pageSize){
 }
 
 /**
+ * 考慮 Unicode 將 base64 解碼轉成文字
+ * @param {string} base64 要解碼的文字
+ * @returns 
+ */
+function convertBase64ToText(base64){
+    const decoded = atob(base64);
+    const chars = [];
+    for (const ch of decoded){
+        chars.push(ch.codePointAt(0));
+    }
+    return new TextDecoder().decode(Uint8Array.from(chars));
+}
+
+/**
+ * 考慮 Unicode 將文字轉成 base64 編碼
+ * @param {string} text 要編碼的文字
+ * @returns 
+ */
+function convertTextToBase64(text){
+    const bytes = new TextEncoder().encode(text);
+    const chars = [];
+    for (const byte of bytes){
+        chars.push(String.fromCodePoint(byte));
+    }
+    return btoa(chars.join(''));
+}
+
+/**
  * 非模糊查詢與分頁過濾
  * @param {any[]} datas 
  * @param {string[]} queryWords 
@@ -138,10 +166,23 @@ function filterData(datas){
     const pageIndex = config.page.index, pageSize = config.page.size, skipCount = pageIndex * pageSize;
     if (config.query.length > 0){
         const queryWords = config.query.split(' ');
+
+        // 忽略大小寫處理
+        for (let i = 0, n = queryWords.length; i < n; i++){
+            queryWords[i] = queryWords[i].toLowerCase();
+        }
+        for (const data of datas){
+            if (data.keyword){
+                data.keyword = data.keyword.toLowerCase();
+            }
+        }
+
         if (config.isFuzzy){
+            // 模糊查詢用 or
             return filterOr(datas, queryWords, skipCount, pageSize);
         }
         else{
+            // and
             return filterAnd(datas, queryWords, skipCount, pageSize);
         }
     }
@@ -178,6 +219,10 @@ function filterOr(datas, queryWords, skipCount, pageSize){
     return result;
 }
 
+/**
+ * 產生隨機 UUID 文字
+ * @returns UUID 字串
+ */
 function generateUUID(){
     const temp = new Array(32), result = new Array(32);
     temp[12] = 4;
@@ -241,9 +286,9 @@ function initializeBody() {
         window.addEventListener('resize', resizeWindow);
     }
     window.addEventListener('scroll', scrollBody);
-    document.getElementById('btnQuery').addEventListener('click', function () { refreshData(true); });
+    document.getElementById('btnQuery').addEventListener('click', query);
     document.getElementById('iptKeyword').addEventListener('keyup', pressKeyword);
-    document.getElementById('chkFuzzy').addEventListener('change', function () { refreshData(true); });
+    document.getElementById('chkFuzzy').addEventListener('change', query);
     refreshData(true);
 }
 
@@ -260,6 +305,18 @@ function pressKeyword(e) {
     }
 }
 
+/**
+ * 按下查詢按鈕或勾選是否模糊查詢後的更新頁面動作
+ */
+function query(){
+    const data = {
+        query: document.getElementById('iptKeyword').value,
+        isFuzzy: document.getElementById('chkFuzzy').checked
+    };
+    const param = encodeURIComponent(convertTextToBase64(JSON.stringify(data)));
+    switchEnable(false);
+    location.href = `index.html?q=${param}`;
+}
 /**
  * 更新圖片
  * @param {boolean} isClear true 表全部清除，false 往後補圖
@@ -295,11 +352,25 @@ function scrollBody() {
 }
 
 /**
- * 取關鍵字輸入框與是否模糊查詢
+ * 將網址傳入的查詢關鍵字，放入輸入框與是否模糊查詢勾選框
  */
 function setConfig(){
-    config.query = document.getElementById('iptKeyword').value.trim();
-    config.isFuzzy = document.getElementById('chkFuzzy').checked;
+    if (location.search){
+        const variables = new URLSearchParams(location.search);
+        console.log(variables);
+        if (variables && variables.size !== 0){
+            try {
+                const q = variables.get('q');
+                const param = JSON.parse(convertBase64ToText(decodeURIComponent(q)));
+                config.query = param.query;
+                config.isFuzzy = param.isFuzzy;
+                document.getElementById('iptKeyword').value = config.query;
+                document.getElementById('chkFuzzy').checked = config.isFuzzy;
+            } catch (error) {
+                console.error(error);
+            }
+        }
+    }
 }
 
 /**
