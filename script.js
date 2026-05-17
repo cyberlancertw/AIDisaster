@@ -313,9 +313,14 @@ function query(){
         query: document.getElementById('iptKeyword').value,
         isFuzzy: document.getElementById('chkFuzzy').checked
     };
-    const param = encodeURIComponent(convertTextToBase64(JSON.stringify(data)));
-    switchEnable(false);
-    location.href = `index.html?q=${param}`;
+    if (!data.query && !data.isFuzzy){
+        location.href = 'index.html';
+    }
+    else{
+        const param = encodeURIComponent(convertTextToBase64(JSON.stringify(data)));
+        switchEnable(false);
+        location.href = `index.html?q=${param}`;
+    }
 }
 /**
  * 更新圖片
