@@ -30,11 +30,11 @@ function appendCard(isClear, ids) {
         const img = document.createElement('img');
         const path = `./image/${id}.png`;
         img.setAttribute('src', path);
+        img.setAttribute('loading', 'lazy');
         img.className = 'gallery-image';
         wrap.appendChild(img);
         wrap.className = 'gallery-wrap';
         link.setAttribute('href', path);
-        //link.setAttribute('target', '_blank');
         link.className = 'gallery-link';
         link.appendChild(wrap);
         pic.className = 'gallery-pic';
